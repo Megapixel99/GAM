@@ -65,7 +65,7 @@ function generateKey(alias, email, passphrase, bits, dir) {
 }
 
 function changeEmail(email) {
-    new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         exec("git config --global user.email " + "\"" + email + "\"", (error, stdout, stderr) => {
             if (error) {
                 reject(error);
@@ -73,6 +73,7 @@ function changeEmail(email) {
             if (stderr) {
                 reject(stderr);
             }
+            resolve();
         });
     }).then(function() {
         exec("git config --local user.email " + "\"" + email + "\"", (error2, stdout, stderr2) => {
@@ -82,13 +83,12 @@ function changeEmail(email) {
             if (stderr2) {
                 reject(stderr2);
             }
-            resolve();
         });
     });
 }
 
 function changeName(name) {
-    new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         exec("git config --global user.name " + "\"" + name + "\"", (error, stdout, stderr) => {
             if (error) {
                 reject(error);
@@ -96,6 +96,7 @@ function changeName(name) {
             if (stderr) {
                 reject(stderr);
             }
+            resolve();
         });
     }).then(function() {
         exec("git config --local user.name " + "\"" + name + "\"", (error2, stdout, stderr2) => {
@@ -105,7 +106,6 @@ function changeName(name) {
             if (stderr2) {
                 reject(stderr2);
             }
-            resolve();
         });
     })
 }
@@ -258,11 +258,8 @@ async function changeAlias(alias, dir) {
         fs.writeFileSync(path.join(dir, "id_rsa"), fs.readFileSync(path.join(dir, "id_rsa_" + alias)))
     ]
     Promise.all(promises).then(async function() {
-        let new_promises = [
-            changeEmail(email),
-            changeName(name)
-        ]
-        Promise.all(new_promises).then(async function() {
+        await changeEmail(email).then(async function() {
+            await changeName(name);
             console.log("Successfully changed git alias" + "\n" +
                 "Current alias: " + alias);
         }).catch(function(err) {
