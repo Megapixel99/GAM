@@ -15,8 +15,8 @@ and
 ```bash
 $ npm install -g pkg
 ```
-##### Building:
-Before pushing any changes, please build the project using:
+##### Building/Releasing:
+Before releasing any new versions, please build the project binarys using:
 ```bash
 $ pkg --out-path $PATH_TO_PROJECT/GAM/binarys PATH_TO_PROJECT/GAM/src/manager.js
 ```
@@ -25,4 +25,4 @@ $ pkg --out-path $PATH_TO_PROJECT/GAM/binarys PATH_TO_PROJECT/GAM/src/manager.js
 ##### To Do:
 - Modify build script for Windows and Linux
 - Add CLI option to view current alias
-- Add CLI option to create backups of SSH keys
+- Add CLI option to create backups of SSH keys (In progress)
