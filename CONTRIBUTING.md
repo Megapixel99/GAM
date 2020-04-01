@@ -16,7 +16,7 @@ and
 $ npm install -g pkg
 ```
 ##### Building/Releasing:
-Before releasing any new versions, please build the project binarys using:
+Before releasing any new versions, please build the project binary(s) using:
 ```bash
 $ pkg --out-path $PATH_TO_PROJECT/GAM/binarys PATH_TO_PROJECT/GAM/src/manager.js
 ```
