@@ -32,6 +32,14 @@ the old keys into the new one to use this CLI application.****
 ## Contributing
 Please see `CONTRIBUTING.md`
 
+## Known Issues
+If you run `build.sh` in zshell, you may receive:
+```
+zsh compinit: insecure directories and files, run compaudit for list.
+Ignore insecure directories and files and continue [y] or abort compinit [n]?
+```
+If you receive this, please run `build.sh` again and the error will not appear.
+
 ## License
 ```
 Copyright 2020 Seth Wheeler
