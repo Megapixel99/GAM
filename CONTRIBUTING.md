@@ -17,7 +17,7 @@ $ npm i
 ```
 
 ##### Building/Releasing:
-Before releasing any new versions, please build the project binary(s) using:
+Before releasing any new versions, please build the project executables using:
 ```bash
 $ ./build.sh
 ```

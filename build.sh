@@ -15,8 +15,8 @@ if ! foobar_loc="$(type -p "npm")" || [[ -z $foobar_loc ]]; then
   echo "Could not find npm, please install npm"
   echo ""
 else
-  echo "Installing the projects' dependencies..."
-  npm install -s
+  echo "Installing the latest version(s) of the projects' dependencies..."
+  npm install > "/dev/null" 2>&1
     while ! foobar_loc="$(type -p "pkg")" || [[ -z $foobar_loc ]]
       do
       read -p "Could not find pkg, which is reqiured to build GAM. Do you want to install pkg? (y/n)" choice
@@ -30,11 +30,12 @@ else
 fi
 
 echo ""
-mkdir -p binarys
-echo "Creating binarys..."
+mkdir -p executables
+echo "Creating executables..."
 echo ""
-pkg --out-path $PWD/binarys $PWD/src/manager.js
-echo "Created binarys successfully"
+pkg --out-path $PWD/executables $PWD/src/manager.js
+echo ""
+echo "Created executables successfully"
 echo ""
 
 while true
@@ -48,3 +49,9 @@ while true
     * ) echo "Invalid response, please try again";;
   esac
 done
+
+echo "Zipping executables folder for release"
+echo ""
+zip -vr executables.zip executables/ -x "*.DS_Store"
+echo ""
+echo "Zipped folder successfully"
