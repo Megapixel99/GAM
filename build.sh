@@ -30,11 +30,12 @@ else
 fi
 
 echo ""
-mkdir -p binarys
-echo "Creating binarys..."
+mkdir -p executables
+echo "Creating executables..."
 echo ""
-pkg --out-path $PWD/binarys $PWD/src/manager.js
-echo "Created binarys successfully"
+pkg --out-path $PWD/executables $PWD/src/manager.js
+echo ""
+echo "Created executables successfully"
 echo ""
 
 while true
