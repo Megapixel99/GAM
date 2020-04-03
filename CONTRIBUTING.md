@@ -22,7 +22,7 @@ Before releasing any new versions, please build the project binary(s) using:
 $ ./build.sh
 ```
 `pkg`, which is installed in `build.sh`, and required to build the project executables,
-may not work with some later versions of NodeJS, if this is the case for your current
+may not work with some versions of NodeJS, if this is the case for your current
 version of NodeJS, please upgrade/downgrade your NodeJS version using a version
 manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com/nvm-sh/nvm)
 
@@ -30,4 +30,4 @@ manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com
 - Modify build script for Windows and Linux
 - Add CLI option to view current alias
 - Add CLI option to create backups of SSH keys (In progress)
-- Fix issue in the use of `sudo` build script with zshell.
+- Fix issue in the use of `sudo` in the build script with zshell.
