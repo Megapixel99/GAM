@@ -49,3 +49,9 @@ while true
     * ) echo "Invalid response, please try again";;
   esac
 done
+
+echo "Zipping executables folder for release"
+echo ""
+zip -vr executables.zip executables/ -x "*.DS_Store"
+echo ""
+echo "Zipped folder successfully"
