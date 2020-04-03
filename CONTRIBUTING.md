@@ -1,5 +1,9 @@
 # Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. For major changes, please open an issue first to
+discuss what you would like to change.
+
+Please only bump the version in the develop branch, and do all work in other branches
+which branch off of develop.
 
 ### Set up your environment
 ##### Prerequisites:
@@ -11,18 +15,19 @@ Please run the following commands in the root directory of the project:
 ```bash
 $ npm i
 ```
-and
-```bash
-$ npm install -g pkg
-```
+
 ##### Building/Releasing:
 Before releasing any new versions, please build the project binary(s) using:
 ```bash
-$ pkg --out-path $PATH_TO_PROJECT/GAM/binarys PATH_TO_PROJECT/GAM/src/manager.js
+$ ./build.sh
 ```
-`pkg` may not work with some later versions of NodeJS, if this is the case for your current version of NodeJS, please upgrade/downgrade your NodeJS version using a version manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com/nvm-sh/nvm)
+`pkg`, which is installed in `build.sh`, and required to build the project executables,
+may not work with some later versions of NodeJS, if this is the case for your current
+version of NodeJS, please upgrade/downgrade your NodeJS version using a version
+manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com/nvm-sh/nvm)
 
 ##### To Do:
 - Modify build script for Windows and Linux
 - Add CLI option to view current alias
 - Add CLI option to create backups of SSH keys (In progress)
+- Fix issue in the use of `sudo` build script with zshell.
