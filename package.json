@@ -1,6 +1,6 @@
 {
   "name": "gam",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "GAM is a NodeJS application for managing multiple Git accounts (aliases).",
   "main": "index.js",
   "scripts": {
