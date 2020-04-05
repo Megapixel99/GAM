@@ -62,50 +62,52 @@ function generateKey(alias, email, passphrase, bits, dir) {
     });
 }
 
-function changeEmail(email) {
+function getCurrentNameAndEmail(dir) {
     return new Promise(function(resolve, reject) {
-        exec("git config --global user.email " + "\"" + email + "\"", (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
+        fs.readFile(dir, function(err, res) {
+            if (err) {
+                reject(err);
             }
-            if (stderr) {
-                reject(stderr);
-            }
-            resolve();
-        });
-    }).then(function() {
-        exec("git config --local user.email " + "\"" + email + "\"", (error2, stdout, stderr2) => {
-            if (error2) {
-                reject(error2);
-            }
-            if (stderr2) {
-                reject(stderr2);
-            }
+            let user = res.toString().match(/\[user\](.*\n\t)(.*\n\t)(.*\n)/g)[0]
+                .replace(/\t/g, '').replace(/ = /g, '=').split("\n")
+            user.pop();
+            resolve({
+                name: user[2].split("=")[1],
+                email: user[1].split("=")[1]
+            });
         });
     });
 }
 
-function changeName(name) {
+async function changeNameAndEmail(name, email, dir) {
+    let curr = (await getCurrentNameAndEmail(dir));
     return new Promise(function(resolve, reject) {
-        exec("git config --global user.name " + "\"" + name + "\"", (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
+        fs.readFile(dir, function(err, res) {
+            if (err) {
+                reject(err);
             }
-            if (stderr) {
-                reject(stderr);
-            }
+            fs.writeFileSync(dir,
+                res.toString().replace("email = " + curr.email, "email = " + email)
+                .replace("name = " + curr.name, "name = " + name));
             resolve();
         });
-    }).then(function() {
-        exec("git config --local user.name " + "\"" + name + "\"", (error2, stdout, stderr2) => {
-            if (error2) {
-                reject(error2);
-            }
-            if (stderr2) {
-                reject(stderr2);
-            }
+    });
+}
+
+function changeGlobalNameAndEmail(name, email) {
+    let dir = path.join(require('os').homedir(), ".gitconfig");
+    return changeNameAndEmail(name, email, dir);
+}
+
+function changeLocalNameAndEmail(name, email) {
+    let dir = path.resolve(process.cwd() + "/.git/config");
+    if (fs.existsSync(dir)) {
+        return changeNameAndEmail(name, email, dir);
+    } else {
+        return new Promise(function(resolve) {
+            resolve()
         });
-    })
+    }
 }
 
 function addSshKeyAgent(alias, dir) {
@@ -256,9 +258,12 @@ async function changeAlias(alias, dir) {
         fs.writeFileSync(path.join(dir, "id_rsa"), fs.readFileSync(path.join(dir, "id_rsa_" + alias)))
     ]
     Promise.all(promises).then(async function() {
-        await changeEmail(email).then(async function() {
-            await changeName(name);
-            console.log("Successfully changed git alias" + "\n" +
+        let promises2 = [
+            changeGlobalNameAndEmail(name, email),
+            changeLocalNameAndEmail(name, email)
+        ]
+        Promise.all(promises2).then(function() {
+            console.log("Successfully changed alias" + "\n" +
                 "Current alias: " + alias);
         }).catch(function(err) {
             throw (err);
