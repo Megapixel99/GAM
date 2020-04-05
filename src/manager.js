@@ -22,6 +22,12 @@ const bits = (args.includes("-b") || args.includes("-bits")) ?
 const dir = (args.includes("-d") || args.includes("-directory")) ?
     ((args[args.indexOf("-directory")] && args[args.indexOf("-directory") + 1]) || (args[args.indexOf("-b")] && args[args.indexOf("-b") + 1])) : path.join(require('os').homedir(), "/.ssh");
 
+
+if (!fs.existsSync(path.join(require('os').homedir(), ".gitconfig"))) {
+    console.log("Could not find a git configuration for the current user, please dowload git and try again");
+    console.log("exiting program");
+    process.exit(0);
+}
 if (args[0] === "create-alias") {
     methods.createAlias(alias, email, passphrase, name, bits, dir);
 } else if (args[0] === "change-alias") {
