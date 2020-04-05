@@ -110,27 +110,6 @@ function changeName(name) {
     })
 }
 
-function currentAlias() {
-    return new Promise(async function(resolve, reject) {
-        let promises = [
-            await getCurrentNameAndEmail(path.join(require('os').homedir(), ".gitconfig")),
-            await getCurrentNameAndEmail(path.resolve(process.cwd() + "/.git/config"))
-        ]
-        Promise.all(promises).then(function() {
-            console.log(promises);
-            resolve({
-                localName: promises[0].name,
-                localEmail: promises[0].email,
-                globalName: promises[1].name,
-                globalEmail: promises[1].email
-            });
-        }).catch(function(err) {
-            console.log("here");
-            reject(err);
-        })
-    });
-}
-
 function addSshKeyAgent(alias, dir) {
     return new Promise(function(resolve, reject) {
         exec("ssh-add " + dir + "/id_rsa_" + alias, (error, stdout, stderr) => {
@@ -308,6 +287,5 @@ module.exports = {
     chooseAlias,
     createAlias,
     changeAlias,
-    deleteAlias,
-    currentAlias
+    deleteAlias
 }
