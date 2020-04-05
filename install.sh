@@ -7,7 +7,7 @@
 echo "Git alias management installing..."
 
 mkdir -p $HOME/.gitAliasManager
-\cp $PWD/binarys/manager-macos $HOME/.gitAliasManager/manager
+\cp $PWD/executables/manager-macos $HOME/.gitAliasManager/manager
 alias gam="$HOME/.gitAliasManager/manager"
 
 echo "Installation complete."
