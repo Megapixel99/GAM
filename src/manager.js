@@ -46,6 +46,18 @@ if (args[0] === "create-alias") {
             throw (error);
         });
     }
+} else if (args[0] === "current-alias") {
+    methods.currentAlias().then(function(res) {
+        console.log("Current Alias Info:" + "\n" +
+            "  " + "Global:" + "\n" +
+            "    " + "Name: " + " " + res.globalName + "\n" +
+            "    " + "Email:" + " " + res.globalEmail + "\n" +
+            "  " + "Local:" + "\n" +
+            "    " + "Name: " + " " + res.localName + "\n" +
+            "    " + "Email:" + " " + res.localEmail);
+    }).catch(function(err) {
+        throw (err);
+    });
 } else if (args[0] === "backup") {
     methods.backup(dir).then(function(res) {
         console.log(res);
@@ -55,10 +67,11 @@ if (args[0] === "create-alias") {
 } else if (args[0] === "h" || args[0] === "help" || args.length === 0) {
     console.log("Usage: gam [command] [options]" + "\n\n" +
         "Available Commands:" + "\n" +
-        "  " + "change-alias: " + "  " + "Changes the current public and private key to the specified alias" + "\n" +
-        "  " + "create-alias: " + "  " + "Creates a public and private key for a new alias" + "\n" +
-        "  " + "delete-alias: " + "  " + "Deletes the public and private key for an alias" + "\n" +
-        "  " + "h, help:      " + "  " + "Print available command line commands and options (currently set)" + "\n\n" +
+        "  " + "create-alias:" + "  " + "Creates a public and private key for a new alias" + "\n" +
+        "  " + "change-alias:" + "  " + "Changes the current public and private key to the specified alias" + "\n" +
+        "  " + "current-alias:" + "  " + "Retrives the email and name assosiated with the current alias" + "\n" +
+        "  " + "delete-alias:" + "  " + "Deletes the public and private key for an alias" + "\n" +
+        "  " + "h, help:     " + "  " + "Print available command line commands and options (currently set)" + "\n\n" +
         "Available Options:" + "\n" +
         "  " + "-a, -alias:     " + "  " + "specify the alias" + "\n" +
         "  " + "-b, -bits:      " + "  " + "specify the number of bits to create for the new key, defaults to 4096, the minimmum is 1024" + "\n" +
