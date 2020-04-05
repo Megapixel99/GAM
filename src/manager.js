@@ -22,6 +22,12 @@ const bits = (args.includes("-b") || args.includes("-bits")) ?
 const dir = (args.includes("-d") || args.includes("-directory")) ?
     ((args[args.indexOf("-directory")] && args[args.indexOf("-directory") + 1]) || (args[args.indexOf("-b")] && args[args.indexOf("-b") + 1])) : path.join(require('os').homedir(), "/.ssh");
 
+
+if (!fs.existsSync(path.join(require('os').homedir(), ".gitconfig"))) {
+    console.log("Could not find a git configuration for the current user, please dowload git and try again");
+    console.log("exiting program");
+    process.exit(0);
+}
 if (args[0] === "create-alias") {
     methods.createAlias(alias, email, passphrase, name, bits, dir);
 } else if (args[0] === "change-alias") {
@@ -68,11 +74,11 @@ if (args[0] === "create-alias") {
         "  " + "h, help:     " + "  " + "Print available command line commands and options (currently set)" + "\n\n" +
         "Available Options:" + "\n" +
         "  " + "-a, -alias:     " + "  " + "specify the alias" + "\n" +
-        "  " + "-e, -email:     " + "  " + "specify the email" + "\n" +
-        "  " + "-p, -passphrase:" + "  " + "specify the passphrase" + "\n" +
-        "  " + "-n, -name:      " + "  " + "specify the name to be assosiated with this alias" + "\n" +
         "  " + "-b, -bits:      " + "  " + "specify the number of bits to create for the new key, defaults to 4096, the minimmum is 1024" + "\n" +
-        "  " + "-d, -directory: " + "  " + "specify the directory to create the new key(s) in, defaults to the .ssh folder in the home directory");
+        "  " + "-d, -directory: " + "  " + "specify the directory to create the new key(s) in, defaults to the .ssh folder in the home directory" + "\n" +
+        "  " + "-e, -email:     " + "  " + "specify the email" + "\n" +
+        "  " + "-n, -name:      " + "  " + "specify the name to be assosiated with this alias" + "\n" +
+        "  " + "-p, -passphrase:" + "  " + "specify the passphrase");
 } else {
     console.log("Command: " + args[0] + " not found, please try again with a different command or execute" + "\n" +
         "$ gam help" + "\n" +
