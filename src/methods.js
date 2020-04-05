@@ -23,7 +23,6 @@ function getFormattedDate(date) {
 
 function chooseAlias(dir, customStr) {
     const aliasList = [];
-    console.log(dir);
     fs.readdirSync(dir).forEach(file => {
         if (file.match(/id_rsa_(.*)\.pub/g)) {
             aliasList.push(file.substring(7, file.length - 4));
@@ -37,7 +36,6 @@ function chooseAlias(dir, customStr) {
                 choices: aliasList
             })
             .then(answer => {
-                console.log(answer.alias);
                 resolve(answer.alias);
             })
             .catch(function(error) {
