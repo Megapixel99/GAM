@@ -62,25 +62,24 @@ function generateKey(alias, email, passphrase, bits, dir) {
     });
 }
 
-function getCurrentNameAndEmail(dir) {
+function getCurrentEmail(dir) {
     return new Promise(function(resolve, reject) {
         fs.readFile(dir, function(err, res) {
             if (err) {
                 reject(err);
             }
-            let user = res.toString().match(/\[user\](.*\n\t)(.*\n\t)(.*\n)/g)[0]
-                .replace(/\t/g, '').replace(/ = /g, '=').split("\n")
+            let user = res.toString().match(/\[user\](.*\n\t)(.*\n)/g)[0]
+                .replace(/\t/g, '').split("\n");
             user.pop();
             resolve({
-                name: user[2].split("=")[1],
-                email: user[1].split("=")[1]
+                email: user[1].split(" = ")[1]
             });
         });
     });
 }
 
-async function changeNameAndEmail(name, email, dir) {
-    let curr = (await getCurrentNameAndEmail(dir));
+async function changeEmail(name, email, dir) {
+    let curr = (await getCurrentEmail(dir));
     return new Promise(function(resolve, reject) {
         fs.readFile(dir, function(err, res) {
             if (err) {
@@ -88,7 +87,7 @@ async function changeNameAndEmail(name, email, dir) {
             }
             fs.writeFileSync(dir,
                 res.toString().replace("email = " + curr.email, "email = " + email)
-                .replace("name = " + curr.name, "name = " + name));
+            );
             resolve();
         });
     });
@@ -96,16 +95,18 @@ async function changeNameAndEmail(name, email, dir) {
 
 function changeGlobalNameAndEmail(name, email) {
     let dir = path.join(require('os').homedir(), ".gitconfig");
-    return changeNameAndEmail(name, email, dir);
+    return changeEmail(name, email, dir);
 }
 
 function changeLocalNameAndEmail(name, email) {
     let dir = path.resolve(process.cwd() + "/.git/config");
     if (fs.existsSync(dir)) {
-        return changeNameAndEmail(name, email, dir);
+        return changeEmail(name, email, dir);
     } else {
         return new Promise(function(resolve) {
-            resolve()
+            resolve({
+                email: "No email set"
+            });
         });
     }
 }
@@ -113,19 +114,15 @@ function changeLocalNameAndEmail(name, email) {
 function currentAlias() {
     return new Promise(async function(resolve, reject) {
         let promises = [
-            await getCurrentNameAndEmail(path.join(require('os').homedir(), ".gitconfig")),
-            await getCurrentNameAndEmail(path.resolve(process.cwd() + "/.git/config"))
-        ]
+            await getCurrentEmail(path.join(require('os').homedir(), ".gitconfig")),
+            await getCurrentEmail(path.resolve(process.cwd() + "/.git/config"))
+        ];
         Promise.all(promises).then(function() {
-            console.log(promises);
             resolve({
-                localName: promises[0].name,
                 localEmail: promises[0].email,
-                globalName: promises[1].name,
                 globalEmail: promises[1].email
             });
         }).catch(function(err) {
-            console.log("here");
             reject(err);
         })
     });

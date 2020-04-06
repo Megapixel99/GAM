@@ -50,10 +50,8 @@ if (args[0] === "create-alias") {
     methods.currentAlias().then(function(res) {
         console.log("Current Alias Info:" + "\n" +
             "  " + "Global:" + "\n" +
-            "    " + "Name: " + " " + res.globalName + "\n" +
             "    " + "Email:" + " " + res.globalEmail + "\n" +
             "  " + "Local:" + "\n" +
-            "    " + "Name: " + " " + res.localName + "\n" +
             "    " + "Email:" + " " + res.localEmail);
     }).catch(function(err) {
         throw (err);
