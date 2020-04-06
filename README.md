@@ -30,9 +30,6 @@ To view a full list of commands and options:
 $ gam help
 ```
 
-****If you have pre-exsisting SSH keys, you may have to recreate them, and copy
-the old keys into the new one to use this CLI application.****
-
 ## Contributing
 Please see `CONTRIBUTING.md`
 
