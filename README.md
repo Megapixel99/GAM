@@ -17,6 +17,10 @@ To change the current alias:
 ```bash
 $ gam change-alias
 ```
+To view the email of the current alias:
+```bash
+$ gam current-alias-email
+```
 To delete a public and private key for an alias
 ```bash
 $ gam delete-alias

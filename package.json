@@ -4,6 +4,7 @@
   "description": "GAM is a NodeJS application for managing multiple Git accounts (aliases).",
   "main": "index.js",
   "scripts": {
+    "prestart": "./node_modules/.bin/eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./src/manager.js"
   },

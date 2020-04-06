@@ -52,14 +52,11 @@ if (args[0] === 'create-alias') {
         + '  ' + 'Local:' + '\n'
         + '    ' + 'Email:' + ` ${emails.localEmail}`);
 } else if (args[0] === 'backup') {
-  methods.backup(dir).then((res) => {
-    console.log(res);
-  }).catch((err) => {
-    throw (err);
-  });
+  methods.backup(dir);
 } else if (args[0] === 'h' || args[0] === 'help' || args.length === 0) {
   console.log('Usage: gam [command] [options]' + '\n\n'
         + 'Available Commands:' + '\n'
+        + '  ' + 'backup:             ' + ' ' + 'Creates a backup of all of the public and private keys' + '\n'
         + '  ' + 'create-alias:       ' + ' ' + 'Creates a public and private key for a new alias' + '\n'
         + '  ' + 'change-alias:       ' + ' ' + 'Changes the current public and private key to the specified alias' + '\n'
         + '  ' + 'current-alias-email:' + ' ' + 'Retrives the email and name assosiated with the current alias' + '\n'

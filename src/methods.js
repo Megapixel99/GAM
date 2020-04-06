@@ -21,6 +21,50 @@ function getFormattedDate(date) {
   return `${month}-${day}-${year}`;
 }
 
+function copyFileSync(source, target) {
+  let targetFile = target;
+
+  if (fs.existsSync(target)) {
+    if (fs.lstatSync(target).isDirectory()) {
+      targetFile = path.join(target, path.basename(source));
+    }
+  }
+
+  fs.writeFileSync(targetFile, fs.readFileSync(source));
+}
+
+function copyFolderRecursiveSync(source, target) {
+  let files = [];
+
+  const targetFolder = target;
+  if (!fs.existsSync(targetFolder)) {
+    fs.mkdirSync(targetFolder);
+  }
+
+  if (fs.lstatSync(source).isDirectory()) {
+    files = fs.readdirSync(source);
+    files.forEach((file) => {
+      const curSource = path.join(source, file);
+      if (fs.lstatSync(curSource).isDirectory() && file.match(/backup-\d{2}-\d{2}-\d{4}/g) !== null) {
+        copyFolderRecursiveSync(curSource, targetFolder);
+      } else {
+        copyFileSync(curSource, targetFolder);
+      }
+    });
+  }
+}
+
+function backup(dir) {
+  const folderName = `backup-${getFormattedDate(new Date())}`;
+  try {
+    copyFolderRecursiveSync(dir, path.join(dir, `/${folderName}`));
+    console.log(`Created Backup folder named: ${folderName}` + ' successfully.');
+  } catch (e) {
+    console.log('An error occured when creating the backup folder');
+    throw e;
+  }
+}
+
 function chooseAlias(dir, customStr) {
   const aliasList = [];
   fs.readdirSync(dir).forEach((file) => {
@@ -278,6 +322,7 @@ function deleteAlias(alias, dir) {
 }
 
 module.exports = {
+  backup,
   chooseAlias,
   createAlias,
   changeAlias,
