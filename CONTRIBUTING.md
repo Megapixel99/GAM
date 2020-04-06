@@ -28,6 +28,4 @@ manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com
 
 ##### To Do:
 - Modify build script for Windows and Linux
-- Add CLI option to view current alias
-- Add CLI option to create backups of SSH keys (In progress)
 - Fix issue in the use of `sudo` in the build script with zshell.
