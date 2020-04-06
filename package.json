@@ -12,7 +12,11 @@
   "dependencies": {
     "inquirer": "^7.1.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Megapixel99/GAM.git"

@@ -16,7 +16,7 @@ if ! foobar_loc="$(type -p "npm")" || [[ -z $foobar_loc ]]; then
   echo ""
 else
   echo "Installing the latest version(s) of the projects' dependencies..."
-  npm install > "/dev/null" 2>&1
+  npm install --production> "/dev/null" 2>&1
     while ! foobar_loc="$(type -p "pkg")" || [[ -z $foobar_loc ]]
       do
       read -p "Could not find pkg, which is reqiured to build GAM. Do you want to install pkg? (y/n)" choice
