@@ -3,9 +3,10 @@
 GAM is a CLI application written in NodeJS for managing multiple Git accounts (aliases).
 
 ## Installation
-Run the following command in the root directory of the project:
+Download `install.py`, then run the following command in the directory where
+`install.py` was downloaded:
 ```bash
-$ source ./install.sh
+$ python ./install.py
 ```
 
 ## Usage
