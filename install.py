@@ -25,7 +25,6 @@ system = platform.system()
 if system == "Windows":
     print ("Windows is currently not supported, please try again later")
     sys.exit()
-print ("Downloading version: " + apiInfo["tag_name"])
 try:
     apiInfo = requests.get("https://api.github.com/repos/Megapixel99/GAM/releases/latest").json()
 except requests.exceptions.Timeout:
@@ -33,7 +32,7 @@ except requests.exceptions.Timeout:
 except requests.exceptions.RequestException as e:
     print ("Unkown error occured")
     raise SystemExit(e)
-
+print ("Downloading version: " + apiInfo["tag_name"])
 if system == "Darwin":
     r = requests.get("https://github.com/Megapixel99/GAM/releases/download/" + apiInfo["tag_name"] + "/manager-macos")
     with open('/usr/bin/gam', 'wb') as f:
