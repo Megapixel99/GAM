@@ -49,7 +49,7 @@ const gam = require('git-alias-manager');
 gam.createAlias("alias", "email@domain.com",
   "passphrase", 2048, '/.ssh');
 ```
-Would output :
+Would output:
 ```
 Generating SSH Keys...
 
@@ -66,7 +66,7 @@ and
 const gam = require('git-alias-manager');
 gam.createAlias();
 ```
-Would output ():
+Would output:
 ```
 ? Please enter an alias to be associated with this new git profile: alias
 ? Please enter an email, to be associated with this new git profile: email@domain.com
