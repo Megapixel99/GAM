@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Licensed under Apache Version 2.0
 // Please see the LICENSE file in the root directory of the project for more
 // information
@@ -29,7 +31,7 @@ if (args[0] === 'create-alias') {
   methods.createAlias(alias, email, passphrase, bits, dir);
 } else if (args[0] === 'change-alias') {
   if (!alias) {
-    methods.chooseAlias(dir, 'to use').then((_alias) => {
+    methods.chooseAlias(' to use', dir).then((_alias) => {
       methods.changeAlias(_alias, dir);
     }).catch((err) => {
       throw (err);
@@ -37,14 +39,14 @@ if (args[0] === 'create-alias') {
   }
 } else if (args[0] === 'delete-alias') {
   if (!alias) {
-    methods.chooseAlias(dir, 'to delete').then((_alias) => {
+    methods.chooseAlias(' to delete', dir).then((_alias) => {
       methods.deleteAlias(_alias, dir);
     }).catch((err) => {
       throw (err);
     });
   }
 } else if (args[0] === 'current-alias-email') {
-  const emails = methods.currentAlias();
+  const emails = methods.currentAliasEmail();
   console.log('Current Alias Info:' + '\n'
         + '  ' + 'Global:' + '\n'
         + '    ' + 'Email:' + ` ${emails.globalEmail}\n`
