@@ -27,6 +27,6 @@ version of NodeJS, please upgrade/downgrade your NodeJS version using a version
 manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com/nvm-sh/nvm)
 
 ##### To Do:
-- Modify build script for Windows and Linux
+- Modify build script for Windows
 - Fix issue in the use of `sudo` in the build script with zshell.
 - Modify commands so they work in different volumes/drives
