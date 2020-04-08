@@ -1,15 +1,17 @@
 # GAM
 ###### (Git Alias Manager)
-GAM is a CLI application written in NodeJS for managing multiple Git accounts (aliases).
+GAM is a CLI application (with an API component) written in NodeJS for managing multiple Git accounts (aliases).
 
 ## Installation
 #### With NPM locally
+to use the API
 ```bash
-$ npm i gam
+$ npm i git-alias-manager
 ```
 #### With NPM globally
+to use the CLI
 ```bash
-$ npm i gam -g
+$ npm i git-alias-manager -g
 ```
 #### Without NPM
 Download `install.py`, then run the following command in the directory where
