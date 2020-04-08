@@ -1,19 +1,35 @@
 ## Methods
+### AddSshKeyAgent
+###### Params:
+`alias` - The name of the Alias
+
+`dir` - Optional, the directory to use, defaults to the `.ssh` folder in the users home directory
+
+###### Description:
+Adds an SSH key to the ssh key-agent
+
+##### Example:
+```javascript
+const gam = require('git-alias-manager');
+console.log('Folder: ' + gam.addSshKeyAgent('alias', '/.ssh'));
+```
+No output
+
 ### Backup
 ###### Params:
 `dir` - Optional, the directory to use, defaults to the `.ssh` folder in the users home directory
 
 ###### Description:
-Creates a backup of all of the files found in a directory
+Creates a backup of all of the files found in a directory, then returns the name of the created folder
 
 ##### Example:
 ```javascript
 const gam = require('git-alias-manager');
-gam.backup('/.ssh');
+console.log('Folder: ' + gam.backup('/.ssh'));
 ```
 Would output (assuming the date is April 8th, 2020):
 ```
-Created Backup folder named: backup-04-08-2020 successfully
+Folder: backup-04-08-2020
 ```
 
 ### chooseAlias
@@ -23,13 +39,13 @@ Created Backup folder named: backup-04-08-2020 successfully
 `dir` - Optional, the directory to search in, defaults to the `.ssh` folder in the users home directory
 
 ##### Description:
-Prompts the user to choose an alias from the list of available aliases associated with ssh keys
+Prompts the user to choose an alias from the list of available aliases associated with ssh keys, then returns the alias
 
 ##### Example:
 ```javascript
 const gam = require('git-alias-manager');
 gam.chooseAlias(customStr, dir).then(function(alias){
-  console.log("Alias: " + alias);
+  console.log('Alias: ' + alias);
 });
 ```
 Would output (after choosing an alias):
@@ -51,45 +67,49 @@ Alias: Megapixel99
 `dir` - Optional, the directory to search in, defaults to the `.ssh` folder in the users home directory
 
 ##### Description:
-Prompts the user to enter the information required to create a new SSH key for a new alias, if any required information passed to this method is `null`, the user will be prompted to enter the necessary information
+Prompts the user to enter the information required to create a new SSH key for a new alias, if any required information passed to this method is `null`, the user will be prompted to enter the necessary information, then returns the information
 
 ##### Examples:
 ```javascript
 const gam = require('git-alias-manager');
-gam.createAlias("alias", "email@domain.com",
-  "passphrase", 2048, '/.ssh');
+gam.createAlias('alias', 'email@domain.com',
+  'passphrase', 2048, '/.ssh').then(function (res) {
+    console.log(res);
+  });
 ```
 Would output:
-```
-Generating SSH Keys...
-
-Adding SSH Keys to the SSH authentication agent...
-Successfully generated an SSH Key for the new git profile
-Your new public and private keys can be found here: /.ssh, and are called id_rsa_alias and id_rsa_alias.pub
-
-Please copy your key to your prefered git repository to begin using it.
+```json
+{
+  "alias": "alias",
+  "email": "email@domain.com",
+  "passphrase": "passphrase",
+  "bits": 4096,
+  "dir": "/.ssh"
+}
 ```
 
 and
 
 ```javascript
 const gam = require('git-alias-manager');
-gam.createAlias();
+gam.createAlias().then(function (res) {
+    console.log(res);
+  });
 ```
 Would output:
-```
+```json
 ? Please enter an alias to be associated with this new git profile: alias
 ? Please enter an email, to be associated with this new git profile: email@domain.com
 ? Please enter a passphrase (leave empty for no passphrase): [hidden]
 ? Please re-enter the passphrase (leave empty for no passphrase): [hidden]
 
-Generating SSH Keys...
-
-Adding SSH Keys to the SSH authentication agent...
-Successfully generated an SSH Key for the new git profile
-Your new public and private keys can be found here: /Users/user/.ssh, and are called id_rsa_alias and id_rsa_alias.pub
-
-Please copy your key to your prefered git repository to begin using it.
+{
+  "alias": "alias",
+  "email": "email@domain.com",
+  "passphrase": "",
+  "bits": 4096,
+  "dir": "/.ssh"
+}
 ```
 ### changeAlias
 ##### Params:
@@ -98,20 +118,18 @@ Please copy your key to your prefered git repository to begin using it.
 `dir` - Optional, the directory to search in, defaults to the `.ssh` folder in the users home directory
 
 ##### Description:
-Prompts the user to choose an alias from the list of available aliases associated with ssh keys, then updates the current git email and SSH keys to that of the current user
-
-Calls `chooseAlias()`
+Updates the current git email and SSH keys to that of the current user, then returns the alias
 
 ##### Example:
 ```javascript
 const gam = require('git-alias-manager');
-gam.changeAlias("alias", '/.ssh');
+gam.changeAlias('alias', '/.ssh').then(function (res) {
+    console.log('Alias: ' + res);
+  });
 ```
-Would output (after choosing an alias):
+Would output:
 ```
-? Choose an alias to use: alias
-Successfully changed alias
-Current alias: alias
+Alias: alias
 ```
 
 ### currentAliasEmail
@@ -123,7 +141,7 @@ Retrieves the current email for the users local and global git config
 const gam = require('git-alias-manager');
 console.log(gam.currentAliasEmail());
 ```
-Would output (after choosing an alias):
+Would output:
 ```json
 {
   "localEmail": "email@domain.com",
@@ -138,18 +156,40 @@ Would output (after choosing an alias):
 `dir` - Optional, the directory to search in, defaults to the `.ssh` folder in the users home directory
 
 ##### Description:
-Prompts the user to choose an alias from the list of available aliases associated with ssh keys, then updates the current git email and SSH keys to that of the current user
-
-Calls `chooseAlias()`
+Deletes the SSH keys for an alias, then returns the alias
 
 ##### Example:
 ```javascript
 const gam = require('git-alias-manager');
-gam.deleteAlias("alias", '/.ssh');
+gam.deleteAlias('alias', '/.ssh').then(function (res) {
+    console.log('Alias: ' + res);
+  });
 ```
-Would output (after choosing an alias):
+Would output:
+
 ```
-? Choose an alias to delete: alias
-Successfully deleted alias
-You may need to change you current alias, if you were using the alias you just deleted
+Alias: alias
 ```
+
+### GenerateKey
+###### Params:
+`alias` - The name of the Alias
+
+`email` - The email associated with the new SSH Key for the Alias
+
+`passphrase` - The passphrase to use when using the new SSH Key
+
+`bits` - Optional, the number of bits in the SSH key hash, defaults to 4096, the minimum in 1024
+
+`dir` - Optional, the directory to search in, defaults to the `.ssh` folder in the users home directory
+
+###### Description:
+Generates and SSH Key for an alias, and saves it to the directory: `dir`
+
+##### Example:
+```javascript
+const gam = require('git-alias-manager');
+console.log(gam.generateKey('alias', 'email',
+  'passphrase', 2048, '/.ssh');
+```
+No output
