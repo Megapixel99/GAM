@@ -310,39 +310,47 @@ async function createAlias(alias, email, passphrase, bits = 4096, dir = path.joi
 
 function changeAlias(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
   return new Promise((async (resolve, reject) => {
-    const pubKey = (await fs.readFileSync(path.join(dir, `id_rsa_${alias}.pub`)));
-    const email = pubKey.toString().match(/\S+@\S+\.\S+/g);
-    const promises = [
-      fs.writeFileSync(path.join(dir, 'id_rsa.pub'), pubKey),
-      fs.writeFileSync(path.join(dir, 'id_rsa'), fs.readFileSync(path.join(dir, `id_rsa_${alias}`))),
-    ];
-    Promise.all(promises).then(() => {
-      const promises2 = [
-        changeGlobalEmail(email),
-        changeLocalEmail(email),
+    if (fs.existsSync(path.join(dir, `id_rsa_${alias}.pub`))) {
+      const pubKey = (await fs.readFileSync(path.join(dir, `id_rsa_${alias}.pub`)));
+      const email = pubKey.toString().match(/\S+@\S+\.\S+/g);
+      const promises = [
+        fs.writeFileSync(path.join(dir, 'id_rsa.pub'), pubKey),
+        fs.writeFileSync(path.join(dir, 'id_rsa'), fs.readFileSync(path.join(dir, `id_rsa_${alias}`))),
       ];
-      Promise.all(promises2).then(() => {
-        resolve(alias);
+      Promise.all(promises).then(() => {
+        const promises2 = [
+          changeGlobalEmail(email),
+          changeLocalEmail(email),
+        ];
+        Promise.all(promises2).then(() => {
+          resolve(alias);
+        }).catch((err) => {
+          throw (err);
+        });
       }).catch((err) => {
         throw (err);
       });
-    }).catch((err) => {
-      throw (err);
-    });
+    } else {
+      throw (new Error('SSH key not found'));
+    }
   }));
 }
 
 function deleteAlias(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
   return new Promise(async (resolve, reject) => {
-    const promises = [
-      fs.unlinkSync(path.join(dir, `id_rsa_${alias}.pub`)),
-      fs.unlinkSync(path.join(dir, `id_rsa_${alias}`)),
-    ];
-    Promise.all(promises).then(() => {
-      resolve(alias);
-    }).catch((err) => {
-      throw (err);
-    });
+    if (fs.existsSync(path.join(dir, `id_rsa_${alias}.pub`)) && fs.existsSync(path.join(dir, `id_rsa_${alias}`))) {
+      const promises = [
+        fs.unlinkSync(path.join(dir, `id_rsa_${alias}.pub`)),
+        fs.unlinkSync(path.join(dir, `id_rsa_${alias}`)),
+      ];
+      Promise.all(promises).then(() => {
+        resolve(alias);
+      }).catch((err) => {
+        throw (err);
+      });
+    } else {
+      throw (new Error('SSH key(s) not found'));
+    }
   });
 }
 
