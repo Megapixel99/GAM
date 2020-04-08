@@ -29,4 +29,4 @@ manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com
 ##### To Do:
 - Modify build script for Windows
 - Fix issue in the use of `sudo` in the build script with zshell.
-- Modify commands so they work in different volumes/drives
+- Modify commands so they work in different volumes/drives when installed with python
