@@ -1,17 +1,19 @@
 {
-  "name": "gam",
+  "name": "git-alias-manager",
   "version": "1.1.2",
-  "description": "GAM is a NodeJS application for managing multiple Git accounts (aliases).",
+  "description": "GAM (Git Alias Manager) is a NodeJS application for managing multiple Git accounts (aliases).",
   "main": "index.js",
   "scripts": {
-    "prestart": "./node_modules/.bin/eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./src/manager.js"
+    "start": "node ./src/methods.js"
   },
   "author": "Seth Wheeler",
   "license": "Apache-2.0",
   "dependencies": {
     "inquirer": "^7.1.0"
+  },
+  "bin": {
+    "gam": "./src/manager.js"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
