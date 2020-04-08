@@ -6,6 +6,16 @@
 ###### Description:
 Creates a backup of all of the files found in a directory
 
+##### Example:
+```javascript
+const gam = require('git-alias-manager');
+gam.backup('/.ssh');
+```
+Would output (assuming the date is April 8th, 2020):
+```
+Created Backup folder named: backup-04-08-2020 successfully
+```
+
 ### chooseAlias
 ##### Params:
 `customStr` - Custom String to display at the end of the choose alias prompt
