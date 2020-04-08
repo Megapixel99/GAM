@@ -54,7 +54,7 @@ function copyFolderRecursiveSync(source, target) {
   }
 }
 
-function backup(dir) {
+function backup(dir = path.join(require('os').homedir(), '/.ssh')) {
   const folderName = `backup-${getFormattedDate(new Date())}`;
   try {
     copyFolderRecursiveSync(dir, path.join(dir, `/${folderName}`));
@@ -65,7 +65,7 @@ function backup(dir) {
   }
 }
 
-function chooseAlias(dir, customStr) {
+function chooseAlias(customStr, dir = path.join(require('os').homedir(), '/.ssh')) {
   const aliasList = [];
   fs.readdirSync(dir).forEach((file) => {
     if (file.match(/id_rsa_(.*)\.pub/g)) {
@@ -76,7 +76,7 @@ function chooseAlias(dir, customStr) {
     inquirer.prompt({
       type: 'list',
       name: 'alias',
-      message: `Choose an alias ${customStr}:`,
+      message: `Choose an alias${customStr}:`,
       choices: aliasList,
     })
       .then((answer) => {
@@ -88,7 +88,7 @@ function chooseAlias(dir, customStr) {
   });
 }
 
-function generateKey(alias, email, passphrase, bits, dir) {
+function generateKey(alias, email, passphrase, bits, dir = path.join(require('os').homedir(), '/.ssh')) {
   return new Promise(((resolve, reject) => {
     exec(`ssh-keygen -f ${path.join(dir, `id_rsa_${alias}`)} -t rsa -b ${bits} -C ${email} -N ${passphrase || "''"} -m PEM`, (error, stdout, stderr) => {
       if (error) {
@@ -102,17 +102,23 @@ function generateKey(alias, email, passphrase, bits, dir) {
   }));
 }
 
-function getCurrentEmail(dir) {
-  const user = fs.readFileSync(dir).toString()
-    .match(/\[user\](.*\n\t)(.*\n)/g)[0].replace(/\t/g, '')
-    .split('\n');
-  user.pop();
+function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh')) {
+  let userEmail;
+  if (fs.readFileSync(dir).toString().match(/\[user\](.*\n\t)(.*\n)/g)) {
+    const user = fs.readFileSync(dir).toString()
+      .match(/\[user\](.*\n\t)(.*\n)/g)[0].replace(/\t/g, '')
+      .split('\n');
+    user.pop();
+    userEmail = user[1].split(' = ')[1];
+  } else {
+    userEmail = 'None found';
+  }
   return ({
-    email: user[1].split(' = ')[1],
+    email: userEmail,
   });
 }
 
-async function changeEmail(email, dir) {
+async function changeEmail(email, dir = path.join(require('os').homedir(), '/.ssh')) {
   const curr = getCurrentEmail(dir);
   return new Promise(((resolve, reject) => {
     fs.readFile(dir, (err, res) => {
@@ -143,14 +149,14 @@ function changeLocalEmail(email) {
   }));
 }
 
-function currentAlias() {
+function currentAliasEmail() {
   return ({
     localEmail: getCurrentEmail(path.join(require('os').homedir(), '.gitconfig')).email,
     globalEmail: getCurrentEmail(path.resolve(`${process.cwd()}/.git/config`)).email,
   });
 }
 
-function addSshKeyAgent(alias, dir) {
+function addSshKeyAgent(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
   return new Promise(((resolve, reject) => {
     exec(`ssh-add ${dir}/id_rsa_${alias}`, (error, stderr) => {
       if (error) {
@@ -164,7 +170,7 @@ function addSshKeyAgent(alias, dir) {
   }));
 }
 
-async function createAlias(alias, email, passphrase, bits, dir) {
+async function createAlias(alias, email, passphrase, bits, dir = path.join(require('os').homedir(), '/.ssh')) {
   if (fs.existsSync(path.join(dir, `id_rsa_${alias}.pub`)) || fs.existsSync(path.join(dir, `id_rsa_${alias}`))) {
     console.log(`An SSH key already exsists for the alias: ${alias}, please choose a different alias and try again`);
     alias = null;
@@ -174,7 +180,7 @@ async function createAlias(alias, email, passphrase, bits, dir) {
         inquirer.prompt({
           type: 'input',
           name: 'alias',
-          message: 'Please enter an alias to be assosiated with this new git profile:',
+          message: 'Please enter an alias to be associated with this new git profile:',
         })
           .then(async (answer) => {
             alias = answer.alias;
@@ -203,7 +209,7 @@ async function createAlias(alias, email, passphrase, bits, dir) {
         inquirer.prompt({
           type: 'input',
           name: 'email',
-          message: 'Please enter an email, to be assosiated with this new git profile:',
+          message: 'Please enter an email, to be associated with this new git profile:',
         })
           .then(async (answer) => {
             email = answer.email;
@@ -211,7 +217,7 @@ async function createAlias(alias, email, passphrase, bits, dir) {
               await inquirer.prompt({
                 type: 'input',
                 name: 'email',
-                message: `${email} is not a valid email, please enter a valid email to be assosiated with this new git profile:`,
+                message: `${email} is not a valid email, please enter a valid email to be associated with this new git profile:`,
               })
                 .then((answer2) => {
                   email = answer2.email;
@@ -285,7 +291,7 @@ async function createAlias(alias, email, passphrase, bits, dir) {
   }
 }
 
-async function changeAlias(alias, dir) {
+async function changeAlias(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
   const pubKey = (await fs.readFileSync(path.join(dir, `id_rsa_${alias}.pub`)));
   const email = pubKey.toString().match(/\S+@\S+\.\S+/g);
   const promises = [
@@ -308,7 +314,7 @@ async function changeAlias(alias, dir) {
   });
 }
 
-function deleteAlias(alias, dir) {
+function deleteAlias(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
   const promises = [
     fs.unlinkSync(path.join(dir, `id_rsa_${alias}.pub`)),
     fs.unlinkSync(path.join(dir, `id_rsa_${alias}`)),
@@ -327,5 +333,5 @@ module.exports = {
   createAlias,
   changeAlias,
   deleteAlias,
-  currentAlias,
+  currentAliasEmail,
 };

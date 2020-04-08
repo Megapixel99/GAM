@@ -3,13 +3,22 @@
 GAM is a CLI application written in NodeJS for managing multiple Git accounts (aliases).
 
 ## Installation
+#### With NPM locally
+```bash
+$ npm i gam
+```
+#### With NPM globally
+```bash
+$ npm i gam -g
+```
+#### Without NPM
 Download `install.py`, then run the following command in the directory where
 `install.py` was downloaded:
 ```bash
 $ python ./install.py
 ```
 
-## Usage
+## CLI Usage
 To create a public and private key for a new alias
 ```bash
 $ gam create-alias
@@ -31,8 +40,11 @@ To view a full list of commands and options:
 $ gam help
 ```
 
+## API Usage
+Please see [`API.md`](https://github.com/Megapixel99/GAM/blob/master/API.md)
+
 ## Contributing
-Please see `CONTRIBUTING.md`
+Please see [`CONTRIBUTING.md`](https://github.com/Megapixel99/GAM/blob/master/CONTRIBUTING.md)
 
 ## Known Issues
 If you run `build.sh` in zshell, you may receive:
