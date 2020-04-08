@@ -102,13 +102,19 @@ function generateKey(alias, email, passphrase, bits, dir = path.join(require('os
   }));
 }
 
-function getCurrentEmail(dir) {
-  const user = fs.readFileSync(dir).toString()
-    .match(/\[user\](.*\n\t)(.*\n)/g)[0].replace(/\t/g, '')
-    .split('\n');
-  user.pop();
+function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh')) {
+  let userEmail;
+  if (fs.readFileSync(dir).toString().match(/\[user\](.*\n\t)(.*\n)/g)) {
+    const user = fs.readFileSync(dir).toString()
+      .match(/\[user\](.*\n\t)(.*\n)/g)[0].replace(/\t/g, '')
+      .split('\n');
+    user.pop();
+    userEmail = user[1].split(' = ')[1];
+  } else {
+    userEmail = 'None found';
+  }
   return ({
-    email: user[1].split(' = ')[1],
+    email: userEmail,
   });
 }
 
