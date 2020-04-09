@@ -44,13 +44,13 @@ Prompts the user to choose an alias from the list of available aliases associate
 ##### Example:
 ```javascript
 const gam = require('git-alias-manager');
-gam.chooseAlias(customStr, dir).then(function(alias){
+gam.chooseAlias('', dir).then(function(alias){
   console.log('Alias: ' + alias);
 });
 ```
 Would output (after choosing an alias):
 ```
-? Choose an alias to use: Megapixel99
+? Choose an alias: Megapixel99
 Alias: Megapixel99
 ```
 
