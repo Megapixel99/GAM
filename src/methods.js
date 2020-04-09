@@ -103,7 +103,20 @@ function generateKey(alias, email, passphrase, bits = 4096, dir = path.join(requ
   }));
 }
 
-function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh')) {
+function getAliasEmail(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
+  let userEmail;
+  const pathToPubKey = path.join(dir, `id_rsa_${alias}.pub`);
+  if (fs.readFileSync(pathToPubKey).toString().match(emailRegex)) {
+    userEmail = fs.readFileSync(pathToPubKey).toString().match(emailRegex)[0];
+  } else {
+    userEmail = 'None found';
+  }
+  return ({
+    email: userEmail,
+  });
+}
+
+function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh', 'id_rsa')) {
   let userEmail;
   if (fs.readFileSync(dir).toString().match(/\[user\](.*\n\t)(.*\n)/g)) {
     const user = fs.readFileSync(dir).toString()
@@ -365,4 +378,5 @@ module.exports = {
   currentAliasEmail,
   deleteAlias,
   generateKey,
+  getAliasEmail,
 };

@@ -95,9 +95,17 @@ if (args[0] === 'create-alias') {
 } else if (args[0] === 'v' || args[0] === 'version') {
   const version = process.env.npm_package_version === null ? process.env.npm_package_version : require('../package.json').version;
   console.log(`Current version: ${version}`);
+} else if (args[0] === 'alias-email') {
+  methods.chooseAlias('', dir).then(async (_alias) => {
+    const res = methods.getAliasEmail(_alias, dir);
+    console.log('    ' + `Email for ${_alias}: ` + `${res.email}`);
+  }).catch((err) => {
+    throw (err);
+  });
 } else if (args[0] === 'h' || args[0] === 'help' || args.length === 0) {
   console.log('Usage: gam [command] [options]' + '\n\n'
         + 'Available Commands:' + '\n'
+        + '  ' + 'alias-email:        ' + ' ' + 'Retrives the email assosiated with the specified alias' + '\n'
         + '  ' + 'backup:             ' + ' ' + 'Creates a backup of all of the public and private keys' + '\n'
         + '  ' + 'create-alias:       ' + ' ' + 'Creates a public and private key for a new alias' + '\n'
         + '  ' + 'change-alias:       ' + ' ' + 'Changes the current public and private key to the specified alias' + '\n'
