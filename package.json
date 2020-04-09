@@ -12,9 +12,6 @@
   "dependencies": {
     "inquirer": "^7.1.0"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "bin": {
     "gam": "./src/manager.js"
   },
