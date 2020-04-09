@@ -9,6 +9,8 @@ const {
   exec,
 } = require('child_process');
 
+const emailRegex = /\S+@\S+\.\S+/g;
+
 function getFormattedDate(date) {
   const year = date.getFullYear();
 
@@ -101,7 +103,20 @@ function generateKey(alias, email, passphrase, bits = 4096, dir = path.join(requ
   }));
 }
 
-function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh')) {
+function getAliasEmail(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
+  let userEmail;
+  const pathToPubKey = path.join(dir, `id_rsa_${alias}.pub`);
+  if (fs.readFileSync(pathToPubKey).toString().match(emailRegex)) {
+    userEmail = fs.readFileSync(pathToPubKey).toString().match(emailRegex)[0];
+  } else {
+    userEmail = 'None found';
+  }
+  return ({
+    email: userEmail,
+  });
+}
+
+function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh', 'id_rsa')) {
   let userEmail;
   if (fs.readFileSync(dir).toString().match(/\[user\](.*\n\t)(.*\n)/g)) {
     const user = fs.readFileSync(dir).toString()
@@ -150,8 +165,8 @@ function changeLocalEmail(email) {
 
 function currentAliasEmail() {
   return ({
-    localEmail: getCurrentEmail(path.join(require('os').homedir(), '.gitconfig')).email,
-    globalEmail: getCurrentEmail(path.resolve(`${process.cwd()}/.git/config`)).email,
+    localEmail: getCurrentEmail(path.resolve(`${process.cwd()}/.git/config`)).email,
+    globalEmail: getCurrentEmail(path.join(require('os').homedir(), '.gitconfig')).email,
   });
 }
 
@@ -222,7 +237,7 @@ async function createAlias(alias, email, passphrase, bits = 4096, dir = path.joi
           })
             .then(async (answer) => {
               email = answer.email;
-              while (!email.match(/\S+@\S+\.\S+/g)) {
+              while (!email.match(emailRegex)) {
                 await inquirer.prompt({
                   type: 'input',
                   name: 'email',
@@ -363,4 +378,5 @@ module.exports = {
   currentAliasEmail,
   deleteAlias,
   generateKey,
+  getAliasEmail,
 };
