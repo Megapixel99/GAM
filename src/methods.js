@@ -165,8 +165,8 @@ function changeLocalEmail(email) {
 
 function currentAliasEmail() {
   return ({
-    localEmail: getCurrentEmail(path.join(require('os').homedir(), '.gitconfig')).email,
-    globalEmail: getCurrentEmail(path.resolve(`${process.cwd()}/.git/config`)).email,
+    localEmail: getCurrentEmail(path.resolve(`${process.cwd()}/.git/config`)).email,
+    globalEmail: getCurrentEmail(path.join(require('os').homedir(), '.gitconfig')).email,
   });
 }
 
