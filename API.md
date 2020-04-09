@@ -193,3 +193,25 @@ console.log(gam.generateKey('alias', 'email',
   'passphrase', 2048, '/.ssh');
 ```
 No output
+
+### getAliasEmail
+###### Params:
+`alias` - The name of the Alias
+
+`dir` - Optional, the directory to search in, defaults to the `.ssh` folder in the users home directory
+
+###### Description:
+Retrieves the email associated with an alias
+
+##### Example:
+```javascript
+const gam = require('git-alias-manager');
+console.log(gam.getAliasEmail('alias', '/.ssh');
+```
+Would output:
+
+```json
+{
+  "email": "email@domian.com"
+}
+```
