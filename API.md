@@ -1,5 +1,5 @@
 ## Methods
-### AddSshKeyAgent
+### addSshKeyAgent
 ###### Params:
 `alias` - The name of the Alias
 
@@ -15,7 +15,7 @@ console.log('Folder: ' + gam.addSshKeyAgent('alias', '/.ssh'));
 ```
 No output
 
-### Backup
+### backup
 ###### Params:
 `dir` - Optional, the directory to use, defaults to the `.ssh` folder in the users home directory
 
@@ -171,7 +171,7 @@ Would output:
 Alias: alias
 ```
 
-### GenerateKey
+### generateKey
 ###### Params:
 `alias` - The name of the Alias
 
