@@ -23,7 +23,7 @@ def make_executable(path):
 homeDir = expanduser("~")
 system = platform.system()
 if system == "Windows":
-    print ("Windows is currently not supported, please try again later")
+    print ("Windows is currently not supported, please try again later or install with npm")
     sys.exit()
 try:
     apiInfo = requests.get("https://api.github.com/repos/Megapixel99/GAM/releases/latest").json()
