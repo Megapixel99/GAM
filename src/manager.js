@@ -109,7 +109,7 @@ if (args[0] === 'create-alias') {
         + '  ' + 'backup:             ' + ' ' + 'Creates a backup of all of the public and private keys' + '\n'
         + '  ' + 'create-alias:       ' + ' ' + 'Creates a public and private key for a new alias' + '\n'
         + '  ' + 'change-alias:       ' + ' ' + 'Changes the current public and private key to the specified alias' + '\n'
-        + '  ' + 'current-alias-email:' + ' ' + 'Retrives the email assosiated with the current alias' + '\n'
+        + '  ' + 'current-alias-email:' + ' ' + 'Retrives the local and global email assosiated with the current alias' + '\n'
         + '  ' + 'delete-alias:       ' + ' ' + 'Deletes the public and private key for an alias' + '\n'
         + '  ' + 'h, help:            ' + ' ' + 'Print available command line commands and options (currently set)' + '\n'
         + '  ' + 'v, version:         ' + ' ' + 'Print the current version' + '\n\n'
