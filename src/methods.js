@@ -9,6 +9,8 @@ const {
   exec,
 } = require('child_process');
 
+const emailRegex = /\S+@\S+\.\S+/g;
+
 function getFormattedDate(date) {
   const year = date.getFullYear();
 
@@ -222,7 +224,7 @@ async function createAlias(alias, email, passphrase, bits = 4096, dir = path.joi
           })
             .then(async (answer) => {
               email = answer.email;
-              while (!email.match(/\S+@\S+\.\S+/g)) {
+              while (!email.match(emailRegex)) {
                 await inquirer.prompt({
                   type: 'input',
                   name: 'email',
