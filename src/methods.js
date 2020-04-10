@@ -314,7 +314,6 @@ async function createAlias(alias, email, passphrase, bits = 4096, dir = path.joi
       }),
     ];
     Promise.all(promises).then(() => {
-      console.log(alias);
       resolve({
         alias,
         email,
