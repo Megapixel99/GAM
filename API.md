@@ -83,7 +83,7 @@ Would output:
   "alias": "alias",
   "email": "email@domain.com",
   "passphrase": "passphrase",
-  "bits": 4096,
+  "bits": 2048,
   "dir": "/.ssh"
 }
 ```
