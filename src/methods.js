@@ -171,17 +171,20 @@ function currentAliasEmail() {
 }
 
 function addSshKeyAgent(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
-  return new Promise(((resolve, reject) => {
-    exec(`ssh-add ${dir}/id_rsa_${alias}`, (error, stderr) => {
-      if (error) {
-        reject(error);
-      }
-      if (stderr) {
-        reject(stderr);
-      }
-      resolve();
+  if (!fs.existsSync(`${dir}/id_rsa_${alias}`)) {
+    return new Promise((resolve, reject) => {
+      exec(`ssh-add ${dir}/id_rsa_${alias}`, (error, stderr) => {
+        if (error) {
+          reject(error);
+        }
+        if (stderr) {
+          reject(stderr);
+        }
+        resolve();
+      });
     });
-  }));
+  }
+  throw (new Error(`File: id_rsa_${alias} not found in directory: ${dir}`));
 }
 
 async function createAlias(alias, email, passphrase, bits = 4096, dir = path.join(require('os').homedir(), '/.ssh')) {
