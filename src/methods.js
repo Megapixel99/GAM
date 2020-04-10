@@ -378,5 +378,6 @@ module.exports = {
   currentAliasEmail,
   deleteAlias,
   generateKey,
+  getFormattedDate,
   getAliasEmail,
 };

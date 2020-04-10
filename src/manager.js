@@ -102,6 +102,9 @@ if (args[0] === 'create-alias') {
   }).catch((err) => {
     throw (err);
   });
+} else if (args[0] === 't' || args[0] === 'test') {
+  const tests = require('../tests/test.js');
+  tests.run('', dir);
 } else if (args[0] === 'h' || args[0] === 'help' || args.length === 0) {
   console.log('Usage: gam [command] [options]' + '\n\n'
         + 'Available Commands:' + '\n'
@@ -112,7 +115,8 @@ if (args[0] === 'create-alias') {
         + '  ' + 'current-alias-email:' + ' ' + 'Retrives the local and global email assosiated with the current alias' + '\n'
         + '  ' + 'delete-alias:       ' + ' ' + 'Deletes the public and private key for an alias' + '\n'
         + '  ' + 'h, help:            ' + ' ' + 'Print available command line commands and options (currently set)' + '\n'
-        + '  ' + 'v, version:         ' + ' ' + 'Print the current version' + '\n\n'
+        + '  ' + 'v, version:         ' + ' ' + 'Print the current version' + '\n'
+        + '  ' + 't, test:            ' + ' ' + 'Run the tests for gam' + '\n\n'
         + 'Available Options:' + '\n'
         + '  ' + 'a, alias:     ' + ' ' + 'specify the alias' + '\n'
         + '  ' + 'b, bits:      ' + ' ' + 'specify the number of bits to create for the new key, defaults to 4096, the minimmum is 1024' + '\n'
