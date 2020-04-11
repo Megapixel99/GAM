@@ -1,6 +1,6 @@
 {
   "name": "git-alias-manager",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "GAM (Git Alias Manager) is a NodeJS application for managing multiple Git accounts (aliases).",
   "main": "./src/methods.js",
   "scripts": {
