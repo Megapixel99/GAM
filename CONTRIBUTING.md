@@ -21,7 +21,7 @@ Before releasing any new versions, please build the project executables using:
 ```bash
 $ ./build.sh
 ```
-`pkg`, which is installed in `build.sh`, and required to build the project executables,
+`pkg`, which is installed in `build.sh`, are required to build the project executables,
 may not work with some versions of NodeJS, if this is the case for your current
 version of NodeJS, please upgrade/downgrade your NodeJS version using a version
 manager such as [n](https://www.npmjs.com/package/n) or [nvm](https://github.com/nvm-sh/nvm)
