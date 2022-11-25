@@ -171,7 +171,7 @@ function currentAliasEmail() {
 }
 
 function addSshKeyAgent(alias, dir = path.join(require('os').homedir(), '/.ssh')) {
-  if (!fs.existsSync(`${dir}/id_rsa_${alias}`)) {
+  if (fs.existsSync(`${dir}/id_rsa_${alias}`)) {
     return new Promise((resolve, reject) => {
       exec(`ssh-add ${dir}/id_rsa_${alias}`, (error, stderr) => {
         if (error) {
