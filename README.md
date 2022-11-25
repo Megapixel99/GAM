@@ -1,3 +1,5 @@
+![npm](https://img.shields.io/npm/v/git-alias-manager)
+
 # GAM
 ###### (Git Alias Manager)
 GAM is a CLI application (with an API component) written in NodeJS for managing multiple Git accounts (aliases).
