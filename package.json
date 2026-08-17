@@ -10,7 +10,7 @@
   "author": "Seth Wheeler",
   "license": "Apache-2.0",
   "dependencies": {
-    "inquirer": "^7.1.0"
+    "inquirer": "^14.0.2"
   },
   "bin": {
     "gam": "./src/manager.js"
