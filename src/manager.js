@@ -21,10 +21,21 @@ const bits = (args.includes('b') || args.includes('bits'))
 const dir = (args.includes('d') || args.includes('directory'))
   ? ((args[args.indexOf('directory')] && args[args.indexOf('directory') + 1]) || (args[args.indexOf('b')] && args[args.indexOf('b') + 1])) : path.join(require('os').homedir(), '/.ssh');
 
-if (!fs.existsSync(path.join(require('os').homedir(), '.gitconfig'))) {
-  console.log('Could not find a git configuration for the current user, please dowload git and try again');
-  console.log('exiting program');
-  process.exit(0);
+// Called only by the commands that actually read or write the user's global git
+// config. It is deliberately not a load-time check: `version` and `help` need no git
+// configuration at all, and a tool that refuses to say what version it is until a git
+// identity exists is broken rather than careful. The commands that only touch SSH
+// keys under `dir` (create-alias, delete-alias, alias-email, backup) do not need one
+// either, so gating them here would be the same mistake in a smaller place.
+//
+// Exits non-zero: this is a fatal precondition failure, and a caller that checks the
+// status must not read "refused to start" as success.
+function requireGitConfig() {
+  if (!fs.existsSync(path.join(require('os').homedir(), '.gitconfig'))) {
+    console.error('Could not find a git configuration for the current user, please download git and try again');
+    console.error('exiting program');
+    process.exit(1);
+  }
 }
 
 if (args[0] === 'create-alias') {
@@ -40,6 +51,8 @@ if (args[0] === 'create-alias') {
     });
   });
 } else if (args[0] === 'change-alias') {
+  // changeGlobalEmail() rewrites ~/.gitconfig.
+  requireGitConfig();
   if (!alias) {
     methods.chooseAlias(' to use', dir).then(async (_alias) => {
       methods.changeAlias(_alias, dir).then((newAlias) => {
@@ -78,6 +91,8 @@ if (args[0] === 'create-alias') {
     });
   }
 } else if (args[0] === 'current-alias-email') {
+  // currentAliasEmail() reads ~/.gitconfig directly and would throw ENOENT without it.
+  requireGitConfig();
   const emails = methods.currentAliasEmail();
   console.log('Current Alias Info:' + '\n'
         + '  ' + 'Global:' + '\n'
