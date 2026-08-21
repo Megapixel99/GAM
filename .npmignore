@@ -1,0 +1,10 @@
+# npm falls back to .gitignore only when this file is absent — and the moment it is
+# present, .gitignore stops being consulted at all. So everything .gitignore excludes
+# is repeated here; dropping a line does not fall back, it ships.
+node_modules/
+executables/
+npmPublish.sh
+
+# CI configuration is about building this package, not about using it. Without this
+# line the workflows are part of every `npm install git-alias-manager`.
+.github/
