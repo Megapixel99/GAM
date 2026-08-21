@@ -1,0 +1,332 @@
+# One version, one registry, and nothing published that the suite has not run against.
+#
+# A publish cannot be taken back. Every step is therefore guarded by its own answer to
+# "is this already done?", so a run that failed halfway can be repeated with
+# workflow_dispatch and will do only what is still missing, rather than failing on
+# "you cannot publish over a previously published version".
+#
+# npm is given no long-lived token. The publish uses trusted publishing (OIDC): the
+# runner mints a short-lived token, npm checks its claims against a publisher
+# registered for THIS repository and THIS workflow file, and a leaked secret is not a
+# thing this repository has to own. Setup is in CONTRIBUTING.md under "Releasing" —
+# until it is done, the publish step fails with an authentication error and nothing
+# else is wrong.
+name: Release
+
+on:
+  push:
+    branches: [master]
+    # A version bump always touches this file. It is a cheap pre-filter, not the
+    # decision — the `check` job below still compares the version against the registry
+    # and the tag list before anything is published.
+    paths:
+      - 'package.json'
+  # Lets a partially failed release be finished without another commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Is anything here unpublished?
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.read.outputs.name }}
+      version: ${{ steps.read.outputs.version }}
+      tag_missing: ${{ steps.read.outputs.tag_missing }}
+      npm_missing: ${{ steps.read.outputs.npm_missing }}
+      release_needed: ${{ steps.read.outputs.release_needed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Tags, so "is this already tagged?" is answered from the repository rather
+          # than from the API.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Read the version, and ask what is still missing
+        id: read
+        run: |
+          set -euo pipefail
+
+          # `node -p` rather than a regex: `"version"` also appears inside every entry
+          # of a dependency block, and a regex that reads the wrong line publishes the
+          # wrong number without saying so.
+          name="$(node -p 'require("./package.json").name')"
+          version="$(node -p 'require("./package.json").version')"
+
+          # A release is not a place to discover that the tag scheme changed. Every tag
+          # in this repository is `vMAJOR.MINOR.PATCH`, and `npm publish` will reject a
+          # non-semver version after the tests have already run.
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::package.json version '$version' is not semver."
+            exit 1
+          fi
+
+          # `bin` is a claim that this file runs as a program. A rename that misses it
+          # publishes a `gam` command that resolves to nothing, and npm does not check.
+          bin="$(node -p 'Object.values(require("./package.json").bin)[0]')"
+          if [ ! -f "$bin" ]; then
+            echo "::error::package.json bin points at $bin, which does not exist."
+            exit 1
+          fi
+          if ! head -c 2 "$bin" | grep -q '#!'; then
+            echo "::error::$bin is the bin target but has no shebang; npm's shim will not run it."
+            exit 1
+          fi
+
+          {
+            echo "name=$name"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            tag_missing=false
+          else
+            tag_missing=true
+          fi
+
+          # `npm view` exits non-zero when that exact version is not published.
+          if npm view "$name@$version" version > /dev/null 2>&1; then
+            npm_missing=false
+          else
+            npm_missing=true
+          fi
+
+          {
+            echo "tag_missing=$tag_missing"
+            echo "npm_missing=$npm_missing"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ "$tag_missing" = false ] && [ "$npm_missing" = false ]; then
+            echo "release_needed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$version is tagged and on npm; nothing to do."
+          else
+            echo "release_needed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Releasing $version (tag missing: $tag_missing, npm missing: $npm_missing)."
+          fi
+
+  # The suite, in full, on THIS commit and inside THIS run. Publishing cannot be
+  # undone, so the gate is not "ci was green on some earlier event" — that green tick
+  # can belong to a different tree.
+  tests:
+    name: Every check, before anything leaves the runner
+    needs: check
+    if: needs.check.outputs.release_needed == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  pack:
+    name: What the tarball contains, and whether it installs
+    needs: [check, tests]
+    if: needs.check.outputs.npm_missing == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Nothing here needs to push, and a checkout that leaves credentials in
+          # `.git/config` hands them to every step that follows.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Pack it
+        # This is the only thing that reads package.json's `files`/`.npmignore` rules
+        # the way the registry will. What it prints is the record of what shipped.
+        run: |
+          npm pack
+          ls -l ./*.tgz
+
+      - name: Nothing from the build ships with the package
+        # package.json has no `files` allowlist, so the tarball is everything minus
+        # `.npmignore` — a denylist, and a denylist is one forgotten entry away from
+        # publishing this workflow to every consumer. Asserted, because the entry that
+        # is missing is always the one nobody thought to add.
+        run: |
+          tar -tzf ./*.tgz | tee /tmp/contents.txt
+          if grep -qE '^package/(\.github|node_modules|executables)/' /tmp/contents.txt; then
+            echo "::error::the tarball carries CI or build output; add it to .npmignore"
+            exit 1
+          fi
+          grep -q '^package/src/manager\.js$' /tmp/contents.txt || {
+            echo "::error::the tarball has no src/manager.js — the bin shim would point at nothing"
+            exit 1; }
+
+      - name: The tarball installs, and the command it promises exists
+        # The `bin` entry is a claim about the published artifact, not about the tree,
+        # so it is checked against the artifact — installed globally into a clean
+        # prefix, outside the repository, where nothing can be satisfied by a relative
+        # path that only exists here.
+        run: |
+          set -euo pipefail
+
+          # `src/manager.js` exits at load time unless `~/.gitconfig` exists — a real
+          # precondition of a tool that manages git identities, and one no fresh runner
+          # satisfies. Without it the installed command never reaches its own argument
+          # handling, and the checks below would be measuring the runner, not the tarball.
+          git config --global user.name  'ci'
+          git config --global user.email 'ci@example.com'
+
+          prefix=/tmp/verify
+          mkdir -p "$prefix"
+          npm install --global --prefix "$prefix" ./*.tgz
+
+          # Outside the repository, where nothing can be satisfied by a relative path
+          # that only exists here.
+          cd /tmp
+
+          # The OUTPUT is asserted on, not the exit status: the missing-gitconfig path
+          # exits 0, so a status check would call a command that refused to start a pass.
+          "$prefix/bin/gam" version | tee /tmp/version.txt
+          grep -q "Current version: ${{ needs.check.outputs.version }}" /tmp/version.txt || {
+            echo "::error::the installed command did not report ${{ needs.check.outputs.version }}"
+            exit 1; }
+
+          "$prefix/bin/gam" help | tee /tmp/help.txt
+          grep -q 'Usage: gam' /tmp/help.txt || {
+            echo "::error::the installed command did not print its usage"; exit 1; }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-tarball
+          path: ./*.tgz
+
+  npm:
+    name: Publish to npm
+    needs: [check, tests, pack]
+    if: needs.check.outputs.npm_missing == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      # Mandatory for trusted publishing: it mints the OIDC token npm verifies.
+      # Nothing else in this job needs a permission, and it has none.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Deliberately NO `registry-url` here. setup-node would write an .npmrc holding
+      # `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`, and this job sets no
+      # such token — so npm sends an unresolved credential and answers E404 instead of
+      # falling back to OIDC. registry.npmjs.org is the default anyway, and trusted
+      # publishing wants no auth line at all.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      # OIDC publishing landed in npm 11.5.1, and Node 24 ships well past that — but
+      # `24.x` resolves to whatever is newest on the day, and a release must not turn
+      # on that.
+      - name: Use the newest npm
+        run: |
+          echo "bundled: $(npm --version)"
+          npm install -g npm@latest
+          echo "now:     $(npm --version)"
+
+      - name: The claims npm will be matched on
+        # A trusted publisher is matched against these. Printing them turns "npm says
+        # ENEEDAUTH" into a concrete comparison with what is registered on npmjs.com:
+        # a workflow filename that does not match, or a publisher pinned to an
+        # environment this job does not declare, both show up here. The token itself is
+        # never printed — only its claims.
+        run: |
+          curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" \
+            > /tmp/idt.json
+          node -e '
+            const fs = require("fs");
+            const raw = JSON.parse(fs.readFileSync("/tmp/idt.json", "utf8"));
+            if (!raw.value) { console.log("no token returned:", JSON.stringify(raw).slice(0, 200)); process.exit(0); }
+            const claims = JSON.parse(Buffer.from(raw.value.split(".")[1], "base64url").toString());
+            for (const k of ["iss", "aud", "sub", "repository", "repository_owner",
+                             "workflow", "workflow_ref", "job_workflow_ref", "ref",
+                             "event_name", "environment", "runner_environment"]) {
+              console.log(`  ${k}: ${claims[k] === undefined ? "(absent)" : claims[k]}`);
+            }
+          '
+          rm -f /tmp/idt.json
+
+      - name: The publish npm would perform, without performing it
+        # `--dry-run` resolves the same manifest and the same file list as the real
+        # thing. The `pack` job already installed that tarball; this is the last look
+        # at it before it is public.
+        run: |
+          npm pack --dry-run
+          npm publish --dry-run
+
+      # No token. Provenance attestations are generated automatically when a public
+      # package is published from a public repository this way, so `--provenance` is
+      # not passed. Verbose, so npm's own account of the OIDC exchange — or its silence
+      # about attempting one — is on the record rather than inferred.
+      - name: Publish with trusted publishing
+        id: publish
+        run: npm publish --loglevel verbose
+
+      - name: What a failure here means
+        if: failure() && steps.publish.outcome == 'failure'
+        run: |
+          echo "::error::npm publish failed. A 404 on PUT means npm rejected the credential."
+          echo "Trusted publishing needs a publisher configured on the npm side:"
+          echo "  npmjs.com -> ${{ needs.check.outputs.name }} -> Settings -> Trusted publishing"
+          echo "  -> GitHub Actions publisher for ${{ github.repository }}, workflow release.yml"
+          echo "See CONTRIBUTING.md, 'Releasing'."
+
+  tag:
+    name: Tag and announce
+    needs: [check, tests, pack, npm]
+    # `always()` with an explicit failure test, because `pack` and `npm` are SKIPPED
+    # when the version is already published — and a plain `needs` reads a skip as a
+    # reason not to run, so a resumed run could never catch the tag up.
+    if: >-
+      always()
+      && needs.check.outputs.release_needed == 'true'
+      && needs.check.outputs.tag_missing == 'true'
+      && needs.tests.result == 'success'
+      && needs.pack.result != 'failure' && needs.pack.result != 'cancelled'
+      && needs.npm.result != 'failure' && needs.npm.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the tag and the GitHub release
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Last, not first. A tag is what people pin to, and one that names a version no
+      # registry serves is a worse artifact than a missing tag.
+      - name: Tag the commit that was published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --generate-notes \
+            --verify-tag
+
+  summary:
+    name: Summary
+    needs: [check, npm, tag]
+    if: always() && needs.check.outputs.release_needed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write it
+        run: |
+          {
+            echo "### ${{ needs.check.outputs.name }} v${{ needs.check.outputs.version }}"
+            echo
+            echo "- npm: ${{ needs.npm.result == 'success' && 'published' || (needs.npm.result == 'skipped' && 'already published' || needs.npm.result) }} — https://www.npmjs.com/package/${{ needs.check.outputs.name }}/v/${{ needs.check.outputs.version }}"
+            echo "- tag and GitHub release: ${{ needs.tag.result == 'success' && 'created' || (needs.tag.result == 'skipped' && 'already tagged' || needs.tag.result) }}"
+            echo
+            echo "Published with trusted publishing (OIDC). No long-lived npm token is stored in this repository."
+          } >> "$GITHUB_STEP_SUMMARY"

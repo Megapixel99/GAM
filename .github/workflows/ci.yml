@@ -1,0 +1,102 @@
+# The suite, on every runtime this package can actually be installed on.
+#
+# `release.yml` calls this workflow rather than copying its jobs, so the gate that
+# guards a publish is the same suite that guards a pull request. A copy drifts the
+# first time a job is added to one and not the other, and a release gate that has
+# drifted from the suite it claims to be is worse than no gate at all.
+name: ci
+
+on:
+  push:
+    # `master` only. A branch with an open PR matches both triggers and every job runs
+    # twice, and a concurrency group does NOT fix it: the push event keys on
+    # `refs/heads/<branch>` while the pull_request event keys on `<branch>`, so the two
+    # land in different groups and neither cancels the other.
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  # `github.workflow` is part of the key because a version-bump push to master matches
+  # BOTH this workflow and `release.yml`, and `release.yml` calls this one. Without it
+  # both land in `ci-refs/heads/master` and `cancel-in-progress` cancels the release's
+  # own test run — a gate cancelled by the push that needs it.
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: The suite on Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The real floor is not in package.json — it is in the dependency tree.
+        # `inquirer@14` declares `>=23.5.0 || ^22.13.0 || ^20.17.0`, so Node 18 cannot
+        # install this package at all, and testing it would be testing a combination
+        # nobody can have. If `engines` is ever added to package.json, this matrix and
+        # that field have to agree.
+        node-version: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # `npm ci` rather than `npm install`: the lockfile is the thing under test, and
+      # `install` is allowed to quietly resolve past it.
+      - name: Install exactly what the lockfile pins
+        run: npm ci
+
+      - name: The suite
+        # Shells out to `ssh-keygen`, which the runner image carries. The suite creates
+        # its keys under `tests/test/` and removes them itself; the next step is what
+        # says so.
+        run: npm test
+
+      - name: The suite cleaned up after itself
+        # `tests/test.js` generates real keypairs and deletes them in `run()`. If a
+        # cleanup is ever skipped the suite still prints "All tests passed", and the
+        # leftovers surface in whichever commit picks them up next — so the tree is
+        # checked here instead of being trusted.
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::the suite left files behind"
+            git status --porcelain
+            exit 1
+          fi
+          echo "tree clean"
+
+      - name: A git identity, because the CLI will not start without one
+        # `src/manager.js` exits at load time unless `~/.gitconfig` exists. That is a
+        # real precondition of a tool that manages git identities, and no fresh runner
+        # satisfies it: actions/checkout writes REPOSITORY-local config, never a global
+        # user. Without this the CLI never reaches its own argument handling.
+        run: |
+          git config --global user.name  'ci'
+          git config --global user.email 'ci@example.com'
+
+      - name: The CLI starts, and answers for itself
+        # `bin` in package.json is a claim that `src/manager.js` runs as a program.
+        # Requiring the module would not check that: the entry point reads `process.argv`
+        # and dispatches at load time, so only invoking it exercises the path a user hits.
+        #
+        # The OUTPUT is what is asserted on, not the exit status. The missing-gitconfig
+        # path above exits 0, so a status check would call a CLI that refused to start
+        # a pass — which is exactly what this step did on its first run.
+        run: |
+          node ./src/manager.js version | tee /tmp/version.txt
+          expected="$(node -p 'require("./package.json").version')"
+          grep -q "Current version: $expected" /tmp/version.txt || {
+            echo "::error::\`gam version\` did not report $expected"; exit 1; }
+
+          node ./src/manager.js help | tee /tmp/help.txt
+          grep -q 'Usage: gam' /tmp/help.txt || {
+            echo "::error::\`gam help\` did not print its usage"; exit 1; }
