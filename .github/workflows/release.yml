@@ -164,15 +164,32 @@ jobs:
         # path that only exists here.
         run: |
           set -euo pipefail
+
+          # `src/manager.js` exits at load time unless `~/.gitconfig` exists — a real
+          # precondition of a tool that manages git identities, and one no fresh runner
+          # satisfies. Without it the installed command never reaches its own argument
+          # handling, and the checks below would be measuring the runner, not the tarball.
+          git config --global user.name  'ci'
+          git config --global user.email 'ci@example.com'
+
           prefix=/tmp/verify
           mkdir -p "$prefix"
           npm install --global --prefix "$prefix" ./*.tgz
+
+          # Outside the repository, where nothing can be satisfied by a relative path
+          # that only exists here.
           cd /tmp
+
+          # The OUTPUT is asserted on, not the exit status: the missing-gitconfig path
+          # exits 0, so a status check would call a command that refused to start a pass.
           "$prefix/bin/gam" version | tee /tmp/version.txt
           grep -q "Current version: ${{ needs.check.outputs.version }}" /tmp/version.txt || {
             echo "::error::the installed command did not report ${{ needs.check.outputs.version }}"
             exit 1; }
-          "$prefix/bin/gam" help > /dev/null
+
+          "$prefix/bin/gam" help | tee /tmp/help.txt
+          grep -q 'Usage: gam' /tmp/help.txt || {
+            echo "::error::the installed command did not print its usage"; exit 1; }
 
       - uses: actions/upload-artifact@v7
         with:
