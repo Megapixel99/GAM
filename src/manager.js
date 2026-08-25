@@ -91,7 +91,8 @@ if (args[0] === 'create-alias') {
     });
   }
 } else if (args[0] === 'current-alias-email') {
-  // currentAliasEmail() reads ~/.gitconfig directly and would throw ENOENT without it.
+  // Reads ~/.gitconfig: it no longer throws when the file is absent, but reporting the
+  // configured identity is meaningless when git was never set up, so refuse up front.
   requireGitConfig();
   const emails = methods.currentAliasEmail();
   console.log('Current Alias Info:' + '\n'

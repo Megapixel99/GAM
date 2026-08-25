@@ -13,6 +13,53 @@ const checkMark = isSupported ? '✔︎' : '√';
 const xMark = isSupported ? '✖' : '×';
 const diamondSymbol = isSupported ? '❖' : 'i';
 
+// Runs the CLI in `cwd` with HOME pointed at a throwaway directory, so the
+// global config lookup cannot see (or touch) the real ~/.gitconfig. The stub
+// ~/.gitconfig is what gets the CLI past its "is git set up?" check.
+function runCliIn(args, cwd) {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'gam-home-'));
+  fs.writeFileSync(path.join(home, '.gitconfig'), '[user]\n\temail = global@domain.com\n\tname = Test User\n');
+  try {
+    return spawnSync(process.execPath, [managerPath].concat(args), {
+      cwd,
+      encoding: 'utf8',
+      env: Object.assign({}, process.env, { HOME: home, USERPROFILE: home }),
+    });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+}
+
+// `current-alias-email` must never blow up with a stack trace, so report the
+// exit status alongside the local email it printed.
+function localEmailIn(cwd) {
+  const res = runCliIn(['current-alias-email'], cwd);
+  const match = `${res.stdout}`.match(/Local:\s*\n\s*Email: (.*)/);
+  return ({
+    status: res.status,
+    localEmail: match ? match[1].trim() : `${res.stdout}${res.stderr}`,
+  });
+}
+
+// Builds a linked worktree layout by hand: `.git` is a file pointing at a
+// gitdir under the main repository, whose `commondir` leads to the shared
+// config.
+function makeWorktreeFixture(email) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gam-worktree-'));
+  const gitDir = path.join(root, 'main', '.git');
+  const worktreeGitDir = path.join(gitDir, 'worktrees', 'linked');
+  const worktree = path.join(root, 'linked');
+  fs.mkdirSync(worktreeGitDir, { recursive: true });
+  fs.mkdirSync(worktree);
+  fs.writeFileSync(path.join(gitDir, 'config'), `[user]\n\temail = ${email}\n\tname = Test User\n`);
+  fs.writeFileSync(path.join(worktreeGitDir, 'commondir'), '../..\n');
+  fs.writeFileSync(path.join(worktree, '.git'), `gitdir: ${worktreeGitDir}\n`);
+  return ({
+    root,
+    worktree,
+  });
+}
+
 function testPrep(dir) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(dir)) {
@@ -189,6 +236,31 @@ function runTests() {
       expected: { status: 1, refused: true, saysDownload: true },
       name: '`current-alias-email` refuses without a git config, and exits non-zero',
     });
+    const notARepo = fs.mkdtempSync(path.join(os.tmpdir(), 'gam-notarepo-'));
+    const fixture = makeWorktreeFixture('worktree@domain.com');
+    try {
+      await testFunction({
+        func: localEmailIn,
+        params: [notARepo],
+        expected: {
+          status: 0,
+          localEmail: 'None found',
+        },
+        name: 'Getting the current alias email outside of a git repository',
+      });
+      await testFunction({
+        func: localEmailIn,
+        params: [fixture.worktree],
+        expected: {
+          status: 0,
+          localEmail: 'worktree@domain.com',
+        },
+        name: 'Getting the current alias email from a git worktree',
+      });
+    } finally {
+      fs.rmSync(notARepo, { recursive: true, force: true });
+      fs.rmSync(fixture.root, { recursive: true, force: true });
+    }
     resolve();
   });
 }
