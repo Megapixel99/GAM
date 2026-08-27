@@ -116,8 +116,59 @@ function getAliasEmail(alias, dir = path.join(require('os').homedir(), '/.ssh'))
   });
 }
 
+// Resolves the config file git would treat as the local config for `cwd`.
+// Returns null when `cwd` is not inside a git repository. In a linked worktree
+// (and in a submodule) `.git` is a file holding a `gitdir:` pointer rather than
+// a directory, so the config lives elsewhere.
+function localGitConfigPath(cwd = process.cwd()) {
+  const gitPath = path.resolve(cwd, '.git');
+  let stats;
+  try {
+    stats = fs.statSync(gitPath);
+  } catch (e) {
+    return null;
+  }
+  if (stats.isDirectory()) {
+    return path.join(gitPath, 'config');
+  }
+  if (!stats.isFile()) {
+    return null;
+  }
+  const pointer = fs.readFileSync(gitPath).toString().match(/^gitdir:\s*(.+)$/m);
+  if (!pointer) {
+    return null;
+  }
+  const gitDir = path.resolve(cwd, pointer[1].trim());
+  // Linked worktrees share the main repository's config, found via `commondir`.
+  const commonDir = path.join(gitDir, 'commondir');
+  if (fs.existsSync(commonDir)) {
+    return path.join(path.resolve(gitDir, fs.readFileSync(commonDir).toString().trim()), 'config');
+  }
+  return path.join(gitDir, 'config');
+}
+
+function isReadableFile(dir) {
+  if (!dir) {
+    return false;
+  }
+  try {
+    if (!fs.statSync(dir).isFile()) {
+      return false;
+    }
+    fs.accessSync(dir, fs.constants.R_OK);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 function getCurrentEmail(dir = path.join(require('os').homedir(), '/.ssh', 'id_rsa')) {
   let userEmail;
+  if (!isReadableFile(dir)) {
+    return ({
+      email: 'None found',
+    });
+  }
   if (fs.readFileSync(dir).toString().match(/\[user\](.*\n\t)(.*\n)/g)) {
     const user = fs.readFileSync(dir).toString()
       .match(/\[user\](.*\n\t)(.*\n)/g)[0].replace(/\t/g, '')
@@ -165,7 +216,7 @@ function changeLocalEmail(email) {
 
 function currentAliasEmail() {
   return ({
-    localEmail: getCurrentEmail(path.resolve(`${process.cwd()}/.git/config`)).email,
+    localEmail: getCurrentEmail(localGitConfigPath()).email,
     globalEmail: getCurrentEmail(path.join(require('os').homedir(), '.gitconfig')).email,
   });
 }
